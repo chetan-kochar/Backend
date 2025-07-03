@@ -1,0 +1,23 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "this is a mega project. reference is Chai aur Code Backend series",
+  "keywords": [
+    "javascript"
+  ],
+  "homepage": "https://github.com/chetan-kochar/Backend#readme",
+  "bugs": {
+    "url": "https://github.com/chetan-kochar/Backend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chetan-kochar/Backend.git"
+  },
+  "license": "ISC",
+  "author": "Chetan Kochar",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
