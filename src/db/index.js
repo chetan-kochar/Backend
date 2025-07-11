@@ -8,7 +8,7 @@ const dblink = dblink_noname.replace("<dbname>" , dBname)
 const connect_dB = async ()=>{
     try{
         const connectionInstance = await mongoose.connect(dblink);
-        console.log("Successfully connected to Database !! \nDB HOst :",connectionInstance.connection.host)
+        console.log("Successfully connected to Database !! \nDB Host :",connectionInstance.connection.host)
     }
     catch(err){
         console.log("Connection to MongodB Failed\n",err)
