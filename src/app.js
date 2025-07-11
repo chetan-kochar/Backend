@@ -4,6 +4,7 @@ import cors from "cors"
 
 const app = express();
 
+
 // Limits the incoming json data
 app.use(express.json({limit:"16kb"}));
 
@@ -19,6 +20,12 @@ app.use(express.static("public"))
 // To manage cookies
 app.use(cookieParser())
 
+// Route imports
+import userRoute from "./routes/user.route.js";
 
-export default app
+
+// Router Declaration
+app.use("/api/v1/user",userRoute)
+
+export default app;
 
