@@ -35,8 +35,12 @@ const registerUser = asyncHandler(async (req,res)=>{
 
     // Step 4 : Checking if files stored in local system
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverLocalPath = req.files?.coverImage[0]?.path;
-    if(avatarLocalPath){throw new ApiErrors(400,"Avatar is required")};
+    // const coverLocalPath = req.files?.coverImage[0]?.path;
+    let coverLocalPath="";
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverLocalPath = req.files.coverImage[0].path;
+    }
+    if(!avatarLocalPath){throw new ApiErrors(400,"Avatar is required")};
 
     // Step 5 : Upload from local to Cloudinary
     const avatar = await uploadOnCloudinary(avatarLocalPath);
@@ -64,7 +68,7 @@ const registerUser = asyncHandler(async (req,res)=>{
 
     // Step 9 : Returning a response
     return res.status(200).json(
-        ApiResponses(200,createdUser,"User successfully registered")
+        new ApiResponses(200,createdUser,"User successfully registered")
     );
 
 
