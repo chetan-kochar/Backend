@@ -6,7 +6,7 @@ const userSchema = new Schema({
     username:{
         type: String,
         required : true,
-        unique : true,
+        unique : [true,"Unique Username required"],
         lowercase : true,
         trim : true,
         index : true //Helps in finding/sorting
@@ -14,7 +14,7 @@ const userSchema = new Schema({
     email : {
         type: String,
         required : true,
-        unique : true,
+        unique : [true,"Email already registered."],
         lowercase : true,
         trim : true
     },
