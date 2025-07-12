@@ -11,4 +11,4 @@ class ApiResponses{
     }
 }
 
-export default ApiResponses;
+export {ApiResponses};
