@@ -51,8 +51,8 @@ const registerUser = asyncHandler(async (req,res)=>{
     // Step 6 : Creating entry in User dB
     const user = await User.create({
         username : username.toLowerCase()
-        ,avatar: avatar.url
-        ,coverImage : coverImage?.url || ""
+        ,avatar: avatar.secure_url
+        ,coverImage : coverImage?.secure_url || ""
         ,fullName
         ,email
         ,password
