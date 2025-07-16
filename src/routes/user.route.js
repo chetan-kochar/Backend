@@ -4,9 +4,9 @@ import {upload} from "../middlewares/multer.middleware.js";
 import {verifyJwt} from "../middlewares/auth.middleware.js";
 
 
-const router = Router();
+const userRouter = Router();
 
-router.route("/register").post(
+userRouter.route("/register").post(
     //Middleware for file handling using multer
     upload.fields([ 
         {
@@ -22,9 +22,9 @@ router.route("/register").post(
     ,registerUser
     );
 
-router.route("/login").post(loginUser);
+userRouter.route("/login").post(loginUser);
 
 
-router.route("/logout").post(verifyJwt,logoutUser);
+userRouter.route("/logout").post(verifyJwt,logoutUser);
 
-export {router};
+export {userRouter};

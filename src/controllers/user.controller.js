@@ -8,9 +8,9 @@ import { rmSync } from "fs";
 
 const generateAccess_RefreshToken = async (user_id)=>{
 try {
-        const user = await User.findOne(username);
-        const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
+        const user = await User.findOne({_id : user_id});
+        const accessToken = await user.generateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
     
         user.refreshToken = refreshToken;
         await user.save({ validateBeforeSave: false });
@@ -103,7 +103,7 @@ const loginUser = asyncHandler(async (req,res)=>{
     //send cookie
     const {username , email ,password} = req.body;
 
-    if(!username || !email || !password){throw new ApiErrors(401,"All fields are required")};
+    if(!(username || email)){throw new ApiErrors(401,"All fields are required")};
 
     const user = await User.findOne(
         {$or : [{ username } ,{ email }]}
