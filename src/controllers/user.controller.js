@@ -4,7 +4,14 @@ import { User } from "../models/user.models.js";
 import {uploadOnCloudinary} from "../utils/Cloudinary.js";
 import {ApiResponses} from "../utils/ApiResponses.js";
 import { rmSync } from "fs";
+import { verifyJwt } from "../middlewares/auth.middleware.js";
+import jwt from "jsonwebtoken"
 
+// Creating options for sending cookies securely
+const options = {
+    httpOnly : true,
+    secure : true
+}
 
 const generateAccess_RefreshToken = async (user_id)=>{
 try {
@@ -22,7 +29,6 @@ try {
 } catch (error) { throw new ApiErrors(501 ,"Something went wrong while generating referesh and access token\n"+ error?.message )
 }
 }
-
 
 const registerUser = asyncHandler(async (req,res)=>{
     // get user details from frontend
@@ -119,11 +125,6 @@ const loginUser = asyncHandler(async (req,res)=>{
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
-    // Creating options for sending cookies securely
-    const options = {
-        httpOnly : true,
-        secure : true
-    }
 
     return res
     .status(200)
@@ -169,10 +170,50 @@ const logoutUser = asyncHandler(async (req,res)=>{
     .json(new ApiResponses(200, {}, "User logged Out"))
 })
 
+const refreshAccessToken = asyncHandler(async (req,res)=>{
+    const refreshToken = req.cookie?.refreshToken || req.body.refreshToken;
+    
+    if(!refreshToken){throw new ApiErrors(401 , "Unauthorized Access")}
+
+    const decodedToken = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET
+    )
+
+    if(!decodedToken){throw new ApiErrors(501 , "Something went wrong while decoding refresh token")}
+
+    const user = await User.findById({_id : decodedToken?._id})
+    
+    if(!user){throw new ApiErrors(401,"Invalid Refresh Token")}
+
+    if(user.refreshToken !== refreshToken){
+        throw new ApiErrors(401, "Refresh token is expired or used")
+    }
+
+    const {newAccessToken , newRefreshToken} = await generateAccess_RefreshToken(user._id);
+
+    user.refreshToken = newRefreshToken;
+    await user.save({validateBeforeSave : false})
+
+    return res
+    .status(200)
+    .cookie("accessToken",newAccessToken,options)
+    .cookie("refreshToken",newRefreshToken,options)
+    .json(
+        new ApiResponses(
+            200,
+            {accessToken : newAccessToken, refreshToken: newRefreshToken},
+            "Access Token refreshed"
+        )
+    )
+} 
+    
+)
 
 
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    refreshAccessToken
 };
