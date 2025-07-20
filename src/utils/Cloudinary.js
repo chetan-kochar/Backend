@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import fs from "fs";
+import { ApiErrors } from './ApiErrors';
 
  cloudinary.config({ 
         cloud_name:process.env.CLOUDINARY_CLOUD_NAME , 
@@ -27,6 +28,32 @@ const uploadOnCloudinary = async (localFilePath) => {
     }
 }
 
+const publicIdExtract = (cloudinaryUrl)=>{
+    if(!cloudinaryUrl){throw new ApiErrors(401 , "URL is required")}
+    const parts = cloudinaryUrl.split("/upload/")
+     if (parts.length < 2) throw new ApiErrors(401, "Invalid Cloudinary URL");
+    // removing the version
+    let publicId = parts[1].replace(/v\d+\//,"");
+    // removing extension
+    publicId = publicId.replace(/\.\w+$/,"");
+    return publicId;
+}
 
+const removeFromCloudinary = async(cloudinaryUrl)=>{
+    try {
+        const publicId = publicIdExtract(cloudinaryUrl)
+        const result = await cloudinary.uploader.destroy(publicId)
+    
+        if(!result || result?.result !== "ok"){throw new ApiErrors(501 , "Something went wrong while removing file from cloudinary\n" + result?.result)}
+    
+        return true;
+    } catch (error) {
+        throw new ApiErrors(501 , error?.message || "Something went wrong while removing file from cloudinary")
+    }
+}
 
-export {uploadOnCloudinary};
+export {
+    uploadOnCloudinary,
+    publicIdExtract,
+    removeFromCloudinary
+};
