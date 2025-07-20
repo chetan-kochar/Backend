@@ -1,14 +1,14 @@
 import {Schema , model} from "mongoose" ;
 
 const subscriberSchema = new Schema({
-    subscribed : [{
-        type : Schema.Types.ObjectId, //channels to whom you subscribed
+    channel : {
+        type : Schema.Types.ObjectId, //channels to whom user subscribed
         ref : "User"
-    }],
-    subscribers : [{
-        type : Schema.Types.ObjectId, //users who have subscribed to you
+    },
+    subscriber : {
+        type : Schema.Types.ObjectId, //users who have subscribed
         ref : "User"
-    }]
+    }
 }
     ,{timestamps : true})
 
