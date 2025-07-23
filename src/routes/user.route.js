@@ -31,16 +31,16 @@ userRouter.route("/logout").post(verifyJwt,logoutUser);
 
 userRouter.route("/refresh-AccessToken").post(refreshAccessToken);
 
-userRouter.route("/get-current-user",verifyJwt,getCurrentUser);
+userRouter.route("/get-current-user").get(verifyJwt,getCurrentUser);
 
-userRouter.route("/change-password",verifyJwt,PassChange);
+userRouter.route("/change-password").post(verifyJwt,PassChange);
 
-userRouter.route("/update_email",verifyJwt,updateEmail);
+userRouter.route("/update_email").patch(verifyJwt,updateEmail);
 
-userRouter.route("/update_fullName",verifyJwt,updateFullName);
+userRouter.route("/update_fullName").patch(verifyJwt,updateFullName);
 
-userRouter.route("/update_avatar",verifyJwt,upload.single("avatar"),updateAvatar);
+userRouter.route("/update_avatar").patch(verifyJwt,upload.single("avatar"),updateAvatar);
 
-userRouter.route("/update_cover_image",verifyJwt,upload.single("coverImage"),updatecoverImage);
+userRouter.route("/update_cover_image").patch(verifyJwt,upload.single("coverImage"),updatecoverImage);
 
 export {userRouter};
