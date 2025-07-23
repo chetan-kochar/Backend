@@ -3,10 +3,9 @@ import {ApiErrors} from "../utils/ApiErrors.js";
 import { User } from "../models/user.models.js";
 import {uploadOnCloudinary ,removeFromCloudinary} from "../utils/Cloudinary.js";
 import {ApiResponses} from "../utils/ApiResponses.js";
-import { rmSync } from "fs";
-import { verifyJwt } from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken"
 import { Subscription } from "../models/subscription.models.js";
+import mongoose from "mongoose";
 
 // Creating options for sending cookies securely
 const options = {
@@ -439,6 +438,57 @@ const getUserChannelProfile = asyncHandler(async (req , res)=>{
     ) )
 })
 
+const getWatchHistory = asyncHandler(async (req, res)=>{
+    const user = await User.aggregate([
+        {
+            $match : {
+                _id : new mongoose.Types.ObjectId(req.user?._id)
+            }
+        },
+        {
+            $lookup:{
+                from : "videos",
+                foreignField : "_id",
+                localField : "watchHistory",
+                as : "watchHistory",
+                pipeline :[{
+                    $lookup:{
+                        from : "users",
+                        foreignField : "_id",
+                        localField : "owner",
+                        as: "owner",
+                        pipeline : [{
+                            $project: {
+                                username : 1,
+                                fullName : 1,
+                                avatar : 1,
+                                coverImage:1
+                            }
+                        }]
+                    },
+                },
+                {
+                    $addFields : {
+                        "owner" : {
+                            "$first" : "$owner"
+                        }
+                    }
+                }
+            ]
+            }
+        }
+    ]);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponses(
+            200,
+            user[0].watchHistory,
+            "Watch history fetched successfully"
+        )
+    )
+})
 
 export {
     registerUser,
@@ -450,5 +500,7 @@ export {
     updateEmail,
     updateFullName,
     updateAvatar,
-    updatecoverImage
+    updatecoverImage,
+    getUserChannelProfile,
+    getWatchHistory
 };
