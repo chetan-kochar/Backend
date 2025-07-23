@@ -6,6 +6,7 @@ import {ApiResponses} from "../utils/ApiResponses.js";
 import { rmSync } from "fs";
 import { verifyJwt } from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken"
+import { Subscription } from "../models/subscription.models.js";
 
 // Creating options for sending cookies securely
 const options = {
@@ -368,6 +369,76 @@ const updatecoverImage = asyncHandler(async (req , res) =>{
         "CoverImage changed successfully"
     ))
 })
+
+const getUserChannelProfile = asyncHandler(async (req , res)=>{
+
+    const { username } = req.params ; 
+
+    if(!username?.trim()){throw new ApiErrors(401, "User is missing")}
+
+    const channelInfo = await User.aggregate([
+        {
+            $match : {username : username?.toLowerCase()}
+        },
+        {
+            $lookup : {
+                from: "subscriptions",
+                localField : "_id",
+                foreignField : "channel",
+                as: "Subscribers"
+            }
+        },
+        {
+            $lookup : {
+                from: "subscriptions",
+                localField : "_id",
+                foreignField : "subscriber",
+                as: "SubscribedTo"
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: "$Subscribers"
+                },
+                channelsSubscribedToCount: {
+                    $size: "$SubscribedTo"
+                }
+            }
+        },
+        {
+            $project : {
+                _id:1,
+                fullName: 1,
+                username: 1,
+                subscribersCount:1,
+                channelsSubscribedToCount: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+            }
+        }
+    ]);
+
+    if(!channelInfo?.length){throw new ApiErrors(404 , "Channel does not exists")};
+
+    let isSubscribed = false;
+    if(req.user._id){
+        isSubscribed = Boolean(await Subscription.exists({
+            channel : channelInfo[0]._id ,
+            subscriber : req.user._id
+        })) 
+    }
+
+    return res
+    .status(200)
+    .json( new ApiResponses(
+        200,
+        {...channelInfo[0],isSubscribed},
+        "Channel Info fetched Successfully"
+    ) )
+})
+
 
 export {
     registerUser,
