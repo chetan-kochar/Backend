@@ -19,7 +19,6 @@ try {
 
         if(!user){throw new ApiErrors(501,"User not found")}
 
-        console.log("While generating tokens found user");
         const accessToken = await user.generateAccessToken();
         const refreshToken = await user.generateRefreshToken();
 
@@ -179,7 +178,7 @@ const logoutUser = asyncHandler(async (req,res)=>{
 
 const refreshAccessToken = asyncHandler(async (req,res)=>{
     try {
-        const userRefreshToken = req.cookie?.refreshToken || req.body?.refreshToken;
+        const userRefreshToken = req.cookies?.accessToken || req.body?.refreshToken;
         
         if(!userRefreshToken){throw new ApiErrors(401 , "Unauthorized Access")}
     
@@ -189,14 +188,11 @@ const refreshAccessToken = asyncHandler(async (req,res)=>{
         )
         
         if(!decodedToken){throw new ApiErrors(501 , "Something went wrong while decoding refresh token")}
-        console.log("Decoded the token")
+
         const user = await User.findById(decodedToken?._id)
         
         if(!user){throw new ApiErrors(401,"Invalid Refresh Token")}
     
-        console.log("User Found")
-
-
         if(user.refreshToken !== userRefreshToken){
             throw new ApiErrors(401, "Refresh token is expired or used")
         }
@@ -207,8 +203,6 @@ const refreshAccessToken = asyncHandler(async (req,res)=>{
     
         user.refreshToken = refreshToken;
         await user.save({validateBeforeSave : false})
-
-        console.log("New refresh Token saved to db")
     
         return res
         .status(200)
@@ -312,19 +306,19 @@ const updateFullName = asyncHandler(async (req , res)=>{
 })
 
 const updateAvatar = asyncHandler(async (req , res) =>{
-    const avatarLocalPath = req.file?.path
-
+    const avatarLocalPath = req.file?.path;
+   
     if(!avatarLocalPath){throw new ApiErrors(400, "Avatar file is missing")}
 
     const newAvatar = await uploadOnCloudinary(avatarLocalPath);
 
-    if(!newAvatar || newAvatar?.result !== "ok"){throw new ApiErrors(501 , "Something went wrong while uploading file to cloudinary\n" + newAvatar?.result)}
+    if(!newAvatar){throw new ApiErrors(501 , "Something went wrong while uploading file to cloudinary\n" + newAvatar?.result)}
 
     console.log("New Avatar successfully uploaded to cloudinary");
 
-    const removeOldAvatar = removeFromCloudinary(newAvatar.secure_url);
+    const removeOldAvatar = removeFromCloudinary(req.user?.avatar);
 
-    if(!removeOldAvatar || removeOldAvatar.result !== "ok"){throw new ApiErrors(501,"Something went wrong while uploading to cloudinary")};
+    if(!removeOldAvatar){throw new ApiErrors(501,"Something went wrong while removing old avatar from cloudinary")};
 
     console.log("Old Avatar successfully removed from cloudinary");
 
@@ -336,7 +330,7 @@ const updateAvatar = asyncHandler(async (req , res) =>{
             }
         },
         {new : true}
-    ).select("-password -refreshToken")
+    )
 
     return res
     .status(200)
@@ -354,13 +348,13 @@ const updatecoverImage = asyncHandler(async (req , res) =>{
 
     const newCoverImage = await uploadOnCloudinary(coverImageLocalPath);
 
-    if(!newCoverImage || newCoverImage?.result !== "ok"){throw new ApiErrors(501 , "Something went wrong while uploading file to cloudinary\n" + newCoverImage?.result)}
+    if(!newCoverImage){throw new ApiErrors(501 , "Something went wrong while uploading file to cloudinary\n" + newCoverImage?.result)}
 
     console.log("New CoverImage successfully uploaded to cloudinary");
 
-    const removeOldCoverImage = removeFromCloudinary(newCoverImage.secure_url);
+    const removeOldCoverImage = removeFromCloudinary(req.user?.coverImage);
 
-    if(!removeOldCoverImage || removeOldCoverImage.result !== "ok"){throw new ApiErrors(501,"Something went wrong while uploading to cloudinary")};
+    if(!removeOldCoverImage){throw new ApiErrors(501,"Something went wrong while uploading to cloudinary")};
 
     console.log("Old CoverImage successfully removed from cloudinary");
 
