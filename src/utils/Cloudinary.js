@@ -31,7 +31,7 @@ const uploadOnCloudinary = async (localFilePath) => {
 const publicIdExtract = (cloudinaryUrl)=>{
     if(!cloudinaryUrl){throw new ApiErrors(401 , "URL is required")}
     const parts = cloudinaryUrl.split("/upload/")
-     if (parts.length < 2) throw new ApiErrors(401, "Invalid Cloudinary URL");
+    if (parts.length < 2) throw new ApiErrors(401, "Invalid Cloudinary URL");
     // removing the version
     let publicId = parts[1].replace(/v\d+\//,"");
     // removing extension
