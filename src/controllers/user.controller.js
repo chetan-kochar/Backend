@@ -16,11 +16,14 @@ const options = {
 const generateAccess_RefreshToken = async (user_id)=>{
 try {
         const user = await User.findOne({_id : user_id});
+
+        if(!user){throw new ApiErrors(501,"User not found")}
+
+        console.log("While generating tokens found user");
         const accessToken = await user.generateAccessToken();
         const refreshToken = await user.generateRefreshToken();
-    
-        user.refreshToken = refreshToken;
-        await user.save({ validateBeforeSave: false });
+
+        if(accessToken && refreshToken){console.log("New tokens generated")};
 
         return {
            accessToken,
@@ -125,6 +128,10 @@ const loginUser = asyncHandler(async (req,res)=>{
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
+    if(!loggedInUser){throw new ApiErrors(501 , "LoggedIn User not found")}
+
+    user.refreshToken = refreshToken;
+    await user.save({validateBeforeSave : false});
 
     return res
     .status(200)
@@ -172,38 +179,45 @@ const logoutUser = asyncHandler(async (req,res)=>{
 
 const refreshAccessToken = asyncHandler(async (req,res)=>{
     try {
-        const refreshToken = req.cookie?.refreshToken || req.body.refreshToken;
+        const userRefreshToken = req.cookie?.refreshToken || req.body?.refreshToken;
         
-        if(!refreshToken){throw new ApiErrors(401 , "Unauthorized Access")}
+        if(!userRefreshToken){throw new ApiErrors(401 , "Unauthorized Access")}
     
-        const decodedToken = jwt.verify(
-            refreshToken,
+        const decodedToken = await jwt.verify(
+            userRefreshToken,
             process.env.REFRESH_TOKEN_SECRET
         )
-    
+        
         if(!decodedToken){throw new ApiErrors(501 , "Something went wrong while decoding refresh token")}
-    
-        const user = await User.findById({_id : decodedToken?._id})
+        console.log("Decoded the token")
+        const user = await User.findById(decodedToken?._id)
         
         if(!user){throw new ApiErrors(401,"Invalid Refresh Token")}
     
-        if(user.refreshToken !== refreshToken){
+        console.log("User Found")
+
+
+        if(user.refreshToken !== userRefreshToken){
             throw new ApiErrors(401, "Refresh token is expired or used")
         }
     
-        const {newAccessToken , newRefreshToken} = await generateAccess_RefreshToken(user._id);
+        const {accessToken , refreshToken } = await generateAccess_RefreshToken(user._id);
+
+        if(accessToken && refreshToken){console.log("New tokens assigned to variables")}
     
-        user.refreshToken = newRefreshToken;
+        user.refreshToken = refreshToken;
         await user.save({validateBeforeSave : false})
+
+        console.log("New refresh Token saved to db")
     
         return res
         .status(200)
-        .cookie("accessToken",newAccessToken,options)
-        .cookie("refreshToken",newRefreshToken,options)
+        .cookie("accessToken",accessToken,options)
+        .cookie("refreshToken",refreshToken,options)
         .json(
             new ApiResponses(
                 200,
-                {accessToken : newAccessToken, refreshToken: newRefreshToken},
+                {accessToken : accessToken, refreshToken: refreshToken},
                 "Access Token refreshed"
             )
         )
