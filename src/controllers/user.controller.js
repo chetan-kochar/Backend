@@ -287,7 +287,7 @@ const updateFullName = asyncHandler(async (req , res)=>{
     if(!(newFullName)){throw new ApiErrors(401 , "New Email is required")};
 
     const user = await User.findByIdAndUpdate(
-        {_id : req.user?._id},
+        req.user?._id,
         {
             $set : {
                 fullName : newFullName
