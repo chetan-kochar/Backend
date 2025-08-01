@@ -8,7 +8,63 @@ import {removeFromCloudinary, uploadOnCloudinary} from "../utils/Cloudinary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+    
+     if(!query || !sortBy || !sortType || !userId){
+        throw new ApiErrors(401 , "All fields are required")
+     }
+
+    const videos = await Video
+    .aggregate([
+        {
+            $match : {"owner"  : mongoose.Types.ObjectId(userId),
+                "title" : {
+                    $regex : query , $options : "i"
+                }
+            }
+        },
+        {
+            $lookup : {
+                from: "users",
+                localField : "owner",
+                foreignField : "_id",
+                as: "owner",
+                pipeline:[
+                    {$project : {
+                        "username" : 1,
+                        "email" : 1,
+                        "fullName" : 1 ,
+                        "avatar" : 1,
+                       "coverImage ": 1
+                    }}
+                ]
+
+            }
+        },
+        {
+            $unwind : "owner"
+        },
+        {
+            $sort : {[sortBy] : sortType === "1" ? 1 : -1}
+        },
+        {
+            $skip : (parseInt(page)-1)*parseInt(limit) 
+        },
+        {
+            $limit : parseInt(limit) || 10
+        }
+    ])    
+    
+
+    return res
+    .status(200)
+    .json(new ApiResponses(
+        200,
+        videos,
+        "Videos fetched successfully"
+    ))
+
+
     //TODO: get all videos based on query, sort, pagination
 })
 
@@ -59,7 +115,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     
     if(!videoId){throw new ApiErrors(401 , "Video ID is required")}
 
-    const video = await Video.findById(videoId);
+    const video = await Video.findById(videoId).populate("owner" , "_id username avatar");
 
     if(!video){throw new ApiErrors(501 , "Video not found")}
 
